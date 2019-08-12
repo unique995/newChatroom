@@ -40,6 +40,7 @@ public class UserReg {
                 if (accountDao.userReg(user)){
                     //弹出提示框
                     JOptionPane.showMessageDialog(frame,"注册成功","提示信息",JOptionPane.INFORMATION_MESSAGE);
+                    //关闭提示框
                     frame.setVisible(false);
                 }else
                     JOptionPane.showMessageDialog(frame,"注册失败","提示信息",JOptionPane.ERROR_MESSAGE);
