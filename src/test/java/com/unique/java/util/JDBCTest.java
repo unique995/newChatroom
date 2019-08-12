@@ -1,8 +1,8 @@
-package com.unique.java;
+package com.unique.java.util;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.alibaba.druid.pool.DruidDataSourceFactory;
-import com.unique.java.util.CommUtils;
+import org.junit.Test;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -15,15 +15,15 @@ import javax.sql.DataSource;
 public class JDBCTest {
     private static DruidDataSource dataSource;
     static {
-        Properties properties = CommUtils.loadProperties("datasourse.properties");
+        Properties properties = CommUtils.loadProperties("datasource.properties");
         try {
             dataSource = (DruidDataSource) DruidDataSourceFactory.createDataSource(properties);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-
-    public static void TestSearch(){
+    @Test
+    public void TestSearch(){
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
@@ -33,6 +33,13 @@ public class JDBCTest {
                 connection = (Connection) dataSource.getPooledConnection();
                 statement = connection.prepareStatement(sql);
                 resultSet = statement.executeQuery();
+                while (resultSet.next()){
+                    int id = resultSet.getInt("id");
+                    String username = resultSet.getString("username");
+                    String password = resultSet.getString("password");
+                    String brief = resultSet.getString("brief");
+                    System.out.println("id :"+id+"  username :"+username+"  password :"+password+"  brief :"+brief);
+                }
             } catch (SQLException e) {
                 e.printStackTrace();
             }
@@ -40,14 +47,15 @@ public class JDBCTest {
             Close(connection,statement,resultSet);
         }
     }
-    public static void TestInsert(){
+    @Test
+    public void TestInsert(){
         Connection connection = null;
         PreparedStatement statement = null;
         try{
             try {
                 connection = (Connection) dataSource.getPooledConnection();
                 String sql = " insert into user(username, password, brief) values (?,?,?)";
-                System.out.println(sql);
+
                 statement = connection.prepareStatement(sql);
                 statement.setString(1,"test");
                 statement.setString(2,"123456");
@@ -89,9 +97,5 @@ public class JDBCTest {
         }
     }
 
-    public static void main(String[] args) {
-        JDBCTest jdbcTest = new JDBCTest();
-        jdbcTest.TestInsert();
 
-    }
 }
