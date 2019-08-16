@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Scanner;
+import java.util.Set;
 
 
 public class userLogin {
@@ -59,6 +61,18 @@ public class userLogin {
                     String json2Server = CommUtils.object2Json(msg2Server);
                     try {
                         PrintStream out = new PrintStream(connect2Server.getOut(),true,"UTF-8");
+                        out.println(json2Server);
+                        // 读取服务端发回的所有在线用户信息
+                        Scanner in = new Scanner(connect2Server.getIn());
+                        if (in.hasNextLine()){
+                            String msgFromServerStr = in.nextLine();
+                            MessageVO msgFromServer = (MessageVO) CommUtils.json2object(msgFromServerStr,MessageVO.class);
+                            Set<String> users = (Set<String>) CommUtils.json2object(msgFromServer.getContent(),Set.class);
+                            System.out.println("所有在线用户为:"+users);
+                            // 加载用户列表界面
+                            // 将当前用户名、所有在线好友、与服务器建立连接传递到好友列表界面
+                            new FriendsList(userName,users,connect2Server);
+                        }
 
                     } catch (UnsupportedEncodingException e1) {
                         e1.printStackTrace();
