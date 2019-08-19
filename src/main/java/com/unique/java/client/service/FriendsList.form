@@ -29,7 +29,7 @@
           <text value="我的群组"/>
         </properties>
       </component>
-      <scrollpane id="b7766">
+      <scrollpane id="b7766" binding="groupListPanel">
         <constraints>
           <grid row="4" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>

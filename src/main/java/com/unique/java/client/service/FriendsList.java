@@ -1,45 +1,162 @@
 package com.unique.java.client.service;
 
+import com.unique.java.util.CommUtils;
+import com.unique.java.vo.MessageVO;
+
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class FriendsList {
     private JScrollPane friendsList;
     private JButton GroupButton;
     private JPanel FriendsList;
-
+    private JScrollPane groupListPanel;
     private JFrame frame;
+
     private String userName;
+    //存储所有在线好友
     private Set<String> users;
+    //存储所有群名称以及群好友
+    private Map<String,Set<String>> groupList = new ConcurrentHashMap<>();
     private Connect2Server connect2Server;
+    private Map<String,PrivateChatGUI> PaivateChatGUIList = new ConcurrentHashMap<String,PrivateChatGUI>();
+
+    //好友列表后台任务，不断监听服务器发来的信息
+    //好友上线信息，用户私聊、群聊
+    private class DaemonTask implements Runnable{
+        private Scanner in = new Scanner(connect2Server.getIn());
+        @Override
+        public void run() {
+            while (true){
+                //收到服务器发来的消息
+                if (in.hasNextLine()){
+                    String strFromServer = in.nextLine();
+                    //此时服务器发来的是一个json字符串
+                    if (strFromServer.startsWith("{")){
+                        MessageVO messageVO = (MessageVO) CommUtils.json2object(strFromServer,MessageVO.class);
+                        if (messageVO.getType().equals("2")){
+                            //服务器发来的私聊消息
+                            String friendName = messageVO.getContent().split("-")[0];
+                            String msg = messageVO.getContent().split("-")[1];
+                            //判断此私聊是否是第一次创建
+                            if (PaivateChatGUIList.containsKey(friendName)){
+                                PrivateChatGUI privateChatGUI = PaivateChatGUIList.get(friendName);
+                                privateChatGUI.getFrame().setVisible(true);
+                                privateChatGUI.readFromServer(friendName+"说"+msg);
+                            }else {
+                                PrivateChatGUI privateChatGUI = new PrivateChatGUI(friendName,userName,connect2Server);
+                                PaivateChatGUIList.put(friendName,privateChatGUI);
+                                privateChatGUI.readFromServer(friendName+"说"+msg);
+                            }
+                        }
+                    }else {
+                        //newLogin:userName
+                        if (strFromServer.startsWith("newLogin:")){
+                            String newFriendName = strFromServer.split(":")[1];
+                            users.add(newFriendName);
+                            //弹框提示用户上线
+                            JOptionPane.showMessageDialog(frame,newFriendName+"上线了","上线提醒",JOptionPane.INFORMATION_MESSAGE);
+                            //刷新好友列表
+                            loadUsers();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    //标签点击事件
+    private class PrivateLableAction implements MouseListener{
+        private String lableName;
+        public PrivateLableAction(String lableName){
+            this.lableName = lableName;
+        }
+        //鼠标点击执行事件
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            //判断好友列表私聊界面缓存是否已经有指定标签
+            if (PaivateChatGUIList.containsKey(lableName)){
+                PrivateChatGUI privateChatGUI = PaivateChatGUIList.get(lableName);
+                privateChatGUI.getFrame().setVisible(true);
+            }else {
+                //第一次点击，创建私聊界面
+                PrivateChatGUI privateChatGUI = new PrivateChatGUI(lableName,userName,connect2Server);
+                PaivateChatGUIList.put(lableName,privateChatGUI);
+            }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+
+        }
+    }
+
 
     public FriendsList(String userName,Set<String> users,Connect2Server connect2Server){
         this.userName = userName;
         this.users = users;
         this.connect2Server = connect2Server;
 
-        JFrame frame = new JFrame("FriendsList");
+        frame = new JFrame(userName);
         frame.setContentPane(FriendsList);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400,300);
-        frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
         loadUsers();
+        //启动后台线程不断监听服务器发来的消息
+        Thread daemonThread = new Thread(new DaemonTask());
+        daemonThread.setDaemon(true);
+        daemonThread.start();
+        //创建群组
+
+
+        GroupButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new CreateGroupGUI(userName,users,connect2Server,FriendsList.this);
+            }
+        });
     }
+
+
 
     //加载所有用户在线信息
     public void loadUsers(){
         JLabel[] userLables = new JLabel[users.size()];
         JPanel friends = new JPanel();
         friends.setLayout(new BoxLayout(friends,BoxLayout.Y_AXIS));
-        //遍历
+        //set遍历
         Iterator<String> iterator = users.iterator();
         int i = 0;
         while (iterator.hasNext()){
             String userName = iterator.next();
             userLables[i] = new JLabel(userName);
+///添加标签点击事件
+            userLables[i].addMouseListener(new PrivateLableAction(userName));
             friends.add(userLables[i]);
             i++;
         }
@@ -48,5 +165,27 @@ public class FriendsList {
         friendsList.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         friends.revalidate();
         friendsList.revalidate();
+    }
+    public void loadGroupList(){
+        //存储所有群名称标签JPanel
+        JPanel groupNamePanel = new JPanel();
+        groupNamePanel.setLayout(new BoxLayout(groupNamePanel,BoxLayout.Y_AXIS));
+        JLabel[] lables = new JLabel[groupList.size()];
+        //Map遍历
+        Set<Map.Entry<String,Set<String>>> entries = groupList.entrySet();
+        Iterator<Map.Entry<String,Set<String>>> iterator = entries.iterator();
+        int i = 0;
+        while (iterator.hasNext()){
+            Map.Entry<String,Set<String>> entry = iterator.next();
+            lables[i] = new JLabel(entry.getKey());
+            groupNamePanel.add(lables[i]);
+            i++;
+        }
+        groupListPanel.setViewportView(groupNamePanel);
+        groupListPanel.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        groupNamePanel.revalidate();
+    }
+    public void addGroup(String groupName,Set<String> friends){
+        groupList.put(groupName,friends);
     }
 }
