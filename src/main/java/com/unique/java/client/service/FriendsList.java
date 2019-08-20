@@ -27,7 +27,10 @@ public class FriendsList {
     //存储所有群名称以及群好友
     private Map<String,Set<String>> groupList = new ConcurrentHashMap<>();
     private Connect2Server connect2Server;
+    //私聊
     private Map<String,PrivateChatGUI> PaivateChatGUIList = new ConcurrentHashMap<String,PrivateChatGUI>();
+    //群聊
+    private Map<String,GroupChatGUI> groupChatGUIList = new ConcurrentHashMap<>();
 
     //好友列表后台任务，不断监听服务器发来的信息
     //好友上线信息，用户私聊、群聊
@@ -55,6 +58,40 @@ public class FriendsList {
                                 PrivateChatGUI privateChatGUI = new PrivateChatGUI(friendName,userName,connect2Server);
                                 PaivateChatGUIList.put(friendName,privateChatGUI);
                                 privateChatGUI.readFromServer(friendName+"说"+msg);
+                            }
+                        }else if(messageVO.getType().equals("4")){
+                            //收到服务器发来的群聊消息
+                            //type：4
+                            //content:sender-msg
+                            //to:groupName-[1,2,3...]
+                            String groupName = messageVO.getTo().split("-")[0];
+                            String senderName = messageVO.getContent().split("-")[0];
+                            String groupMsg = messageVO.getContent().split("-")[1];
+                            //若此群名称在群聊列表
+                            if (groupList.containsKey(groupName)){
+                                if (groupChatGUIList.containsKey(groupName)){
+                                    //群聊界面弹出
+                                    GroupChatGUI groupChatGUI = groupChatGUIList.get(groupName);
+                                    groupChatGUI.getFrame().setVisible(true);
+                                    groupChatGUI.readFromServer(senderName+"说"+groupMsg);
+
+                                }else {
+                                    Set<String> names = groupList.get(groupName);
+                                    GroupChatGUI groupChatGUI = new GroupChatGUI(groupName,names,userName,connect2Server);
+                                    groupChatGUIList.put(groupName,groupChatGUI);
+                                    groupChatGUI.readFromServer(senderName+"说："+groupMsg);
+
+                                }
+                            }else {
+                                //若群成员第一次收到群聊消息
+                                //1.将群名称以及群成员保存到当前客户端群聊列表
+                                Set<String> friends = (Set<String>) CommUtils.json2object(messageVO.getTo().split("-")[1],Set.class);
+                                groupList.put(groupName,friends);
+                                loadGroupList();
+                                //2.弹出群聊界面
+                                GroupChatGUI groupChatGUI = new GroupChatGUI(groupName,friends,userName,connect2Server);
+                                groupChatGUIList.put(groupName,groupChatGUI);
+                                groupChatGUI.readFromServer(senderName+"说："+groupMsg);
                             }
                         }
                     }else {
@@ -90,6 +127,44 @@ public class FriendsList {
                 //第一次点击，创建私聊界面
                 PrivateChatGUI privateChatGUI = new PrivateChatGUI(lableName,userName,connect2Server);
                 PaivateChatGUIList.put(lableName,privateChatGUI);
+            }
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseEntered(MouseEvent e) {
+
+        }
+
+        @Override
+        public void mouseExited(MouseEvent e) {
+
+        }
+    }
+    //群聊点击事件
+    private class GroupLableAction implements MouseListener{
+        private String groupName;
+        public GroupLableAction(String groupName){
+            this.groupName = groupName;
+        }
+        @Override
+        public void mouseClicked(MouseEvent e) {
+            if (groupChatGUIList.containsKey(groupName)){
+                GroupChatGUI groupChatGUI = groupChatGUIList.get(groupName);
+
+            }else {
+                Set<String> names = groupList.get(groupName);
+                GroupChatGUI groupChatGUI = new GroupChatGUI(groupName,names,userName,connect2Server);
+                groupChatGUIList.put(groupName,groupChatGUI);
             }
         }
 
@@ -178,6 +253,7 @@ public class FriendsList {
         while (iterator.hasNext()){
             Map.Entry<String,Set<String>> entry = iterator.next();
             lables[i] = new JLabel(entry.getKey());
+            lables[i].addMouseListener(new GroupLableAction(entry.getKey()));
             groupNamePanel.add(lables[i]);
             i++;
         }

@@ -9,10 +9,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Scanner;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,6 +62,10 @@ public class MultiThreadServer {
                         System.out.println(userName+"上线了!");
                         System.out.println("当前聊天室共有"+ clientstMap.size()+"人");
                     }else if(msgFromClient.getType().equals("2")){
+                        //用户私聊
+                        //type:2
+                        //content:myName-msg
+                        //to:friendName
                         String friendName = msgFromClient.getTo();
                         Socket clientSocket = clientstMap.get(friendName);
                         try {
@@ -84,6 +85,28 @@ public class MultiThreadServer {
                         Set<String> friends = (Set<String>) CommUtils.json2object(msgFromClient.getTo(),Set.class);
                         groups.put(groupName,friends);
                         System.out.println("有新的群注册成功，群名称为"+groupName+",一共有"+groups.size()+"个群");
+                    }else if (msgFromClient.getType().equals("4")){
+                        //群聊信息
+                        System.out.println("服务器收到的群聊消息为："+msgFromClient);
+                        String groupName = msgFromClient.getContent();
+                        Set<String> names = groups.get(groupName);
+                        Iterator<String> iterator = names.iterator();
+                        while (iterator.hasNext()){
+                            String socketName = iterator.next();
+                            Socket client = clientstMap.get(socketName);
+                            try {
+                                PrintStream out = new PrintStream(client.getOutputStream(),true,"UTF-8");
+                                MessageVO messageVO = new MessageVO();
+                                messageVO.setType("4");
+                                messageVO.setContent(msgFromClient.getContent());
+                                //群名-[]
+                                messageVO.setTo(groupName+"-"+CommUtils.object2Json(names));
+                                out.println(CommUtils.object2Json(messageVO));
+                                System.out.println("服务器端发来的群聊消息为："+messageVO);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
                     }
                 }
             }
