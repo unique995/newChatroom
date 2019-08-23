@@ -32,7 +32,7 @@ public class userLogin {
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
-//注册按钮
+        //注册按钮
         regButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

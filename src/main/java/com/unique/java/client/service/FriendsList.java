@@ -160,7 +160,7 @@ public class FriendsList {
         public void mouseClicked(MouseEvent e) {
             if (groupChatGUIList.containsKey(groupName)){
                 GroupChatGUI groupChatGUI = groupChatGUIList.get(groupName);
-
+                groupChatGUI.getFrame().setVisible(true);
             }else {
                 Set<String> names = groupList.get(groupName);
                 GroupChatGUI groupChatGUI = new GroupChatGUI(groupName,names,userName,connect2Server);
@@ -207,8 +207,6 @@ public class FriendsList {
         daemonThread.setDaemon(true);
         daemonThread.start();
         //创建群组
-
-
         GroupButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -230,7 +228,7 @@ public class FriendsList {
         while (iterator.hasNext()){
             String userName = iterator.next();
             userLables[i] = new JLabel(userName);
-///添加标签点击事件
+        //添加标签点击事件
             userLables[i].addMouseListener(new PrivateLableAction(userName));
             friends.add(userLables[i]);
             i++;

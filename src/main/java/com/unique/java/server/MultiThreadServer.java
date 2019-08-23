@@ -129,9 +129,9 @@ public class MultiThreadServer {
         ServerSocket serverSocket = new ServerSocket(PORT);
         ExecutorService executors = Executors.newFixedThreadPool(50);
         for (int i = 0;i < 50;i++){
-            System.out.println("等待客户端连接");
+            System.out.println("等待客户端连接...");
             Socket client = serverSocket.accept();
-            System.out.println("有新的连接，端口号为："+client.getPort());
+            System.out.println("有新的客户端连接，端口号为："+client.getPort());
             executors.submit(new ExecuteClient(client));
         }
     }
