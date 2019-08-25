@@ -50,17 +50,32 @@ public class MultiThreadServer {
                     // 新用户注册到服务端
                     if (msgFromClient.getType().equals("1")){
                         String userName = msgFromClient.getContent();
-                        // 将当前在线的所有用户名发回客户端
-                        MessageVO msg2Client = new MessageVO();
-                        msg2Client.setType("1");
-                        msg2Client.setContent(CommUtils.object2Json(clientstMap.keySet()));
-                        out.println(CommUtils.object2Json(msg2Client));
-                        // 将新上线的用户信息发回给当前已在线的所有用户
-                        sendUserLogin("newLogin:"+userName);
-                        // 将当前新用户注册到服务端缓存
-                        clientstMap.put(userName,client);
-                        System.out.println(userName+"上线了!");
-                        System.out.println("当前聊天室共有"+ clientstMap.size()+"人");
+                        if (clientstMap.containsKey(userName)){
+                            MessageVO messageVO = new MessageVO();
+                            messageVO.setType("-1");
+                            out.println(CommUtils.object2Json(messageVO));
+                        }else {
+                            // 将当前在线的所有用户名发回客户端
+                            MessageVO msg2Client = new MessageVO();
+                            msg2Client.setType("1");
+                            msg2Client.setContent(CommUtils.object2Json(clientstMap.keySet()));
+                            out.println(CommUtils.object2Json(msg2Client));
+                            // 将新上线的用户信息发回给当前已在线的所有用户
+                            sendUserLogin("newLogin:"+userName);
+                            // 将当前新用户注册到服务端缓存
+                            clientstMap.put(userName,client);
+                            System.out.println(userName+"上线了!");
+                            System.out.println("当前聊天室共有"+ clientstMap.size()+"人");
+                        }
+
+                    }else if(msgFromClient.getType().equals("0")){
+                        //用户退出
+                        String username = msgFromClient.getContent();
+                        clientstMap.remove(username);
+                        sendUserLogin("quitUser"+username);
+                        System.out.println(username+"下线了");
+                        System.out.println("当前聊天室共有"+clientstMap.size()+"人");
+
                     }else if(msgFromClient.getType().equals("2")){
                         //用户私聊
                         //type:2

@@ -48,9 +48,7 @@ public class userLogin {
                 String password = String.valueOf(passwordField.getPassword());
                 User user = accountDao.userLogin(userName,password);
                 if (user != null){
-                    //成功
-                    JOptionPane.showMessageDialog(frame,"登录成功","提示信息",JOptionPane.INFORMATION_MESSAGE);
-                    frame.setVisible(false);//关闭提示框
+
                     //加载用户列表
                     //与服务器建立连接，将当前用户的用户名和密码发到服务器
                     Connect2Server connect2Server = new Connect2Server();
@@ -67,11 +65,19 @@ public class userLogin {
                         if (in.hasNextLine()){
                             String msgFromServerStr = in.nextLine();
                             MessageVO msgFromServer = (MessageVO) CommUtils.json2object(msgFromServerStr,MessageVO.class);
-                            Set<String> users = (Set<String>) CommUtils.json2object(msgFromServer.getContent(),Set.class);
-                            System.out.println("所有在线用户为:"+users);
-                            // 加载用户列表界面
-                            // 将当前用户名、所有在线好友、与服务器建立连接传递到好友列表界面
-                            new FriendsList(userName,users,connect2Server);
+                            if (msgFromServer.getType().equals("-1")){
+                                //用户在别处正在登录
+                                JOptionPane.showMessageDialog(frame,"当前用户已经登录","提示信息",JOptionPane.ERROR_MESSAGE);
+                            }else {
+                                //成功
+                                JOptionPane.showMessageDialog(frame,"登录成功","提示信息",JOptionPane.INFORMATION_MESSAGE);
+                                frame.setVisible(false);//关闭提示框
+                                Set<String> users = (Set<String>) CommUtils.json2object(msgFromServer.getContent(),Set.class);
+                                System.out.println("所有在线用户为:"+users);
+                                // 加载用户列表界面
+                                // 将当前用户名、所有在线好友、与服务器建立连接传递到好友列表界面
+                                new FriendsList(userName,users,connect2Server);
+                            }
                         }
 
                     } catch (UnsupportedEncodingException e1) {

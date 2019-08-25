@@ -56,11 +56,9 @@ public class AccountDao extends BaseDao{
         }
         return null;
     }
-
     /*
     结果集转字符串
      */
-
     private User getUser(ResultSet resultSet) throws SQLException {
         User user = new User();
         user.setId(resultSet.getInt("id"));
@@ -68,5 +66,27 @@ public class AccountDao extends BaseDao{
         user.setPassword(resultSet.getString("password"));
         user.setBrief(resultSet.getString("brief"));
         return user;
+    }
+
+    public Boolean IsExist(String userName){
+        Connection connection = null;
+        PreparedStatement statement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = getConnection();
+            String sql = "select * from user where username = ? ";
+            statement = connection.prepareStatement(sql);
+            statement.setString(1,userName);
+            resultSet = statement.executeQuery();
+            if (resultSet.next()){
+                return true;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }finally {
+            Close(connection,statement,resultSet);
+        }
+        return false;
     }
 }

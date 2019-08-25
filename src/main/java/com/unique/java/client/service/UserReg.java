@@ -16,6 +16,9 @@ public class UserReg {
     private JButton 注册Button;
     private AccountDao accountDao = new AccountDao();
 
+    public static void IsEXist(String userName){
+
+    }
     public UserReg(){
         JFrame frame = new JFrame("用户注册");
         frame.setContentPane(userRegPanel);
@@ -32,18 +35,30 @@ public class UserReg {
                 String userName = userNametextField1.getText();
                 String password = String.valueOf(passwordField1.getPassword());
                 String brief = brieftextField1.getText();
-                User user = new User();
-                user.setUsername(userName);
-                user.setPassword(password);
-                user.setBrief(brief);
-                //调用dao对象
-                if (accountDao.userReg(user)){
-                    //弹出提示框
-                    JOptionPane.showMessageDialog(frame,"注册成功","提示信息",JOptionPane.INFORMATION_MESSAGE);
-                    //关闭提示框
-                    frame.setVisible(false);
-                }else
-                    JOptionPane.showMessageDialog(frame,"注册失败","提示信息",JOptionPane.ERROR_MESSAGE);
+                //判断注册的账户的密码是否符合注册要求
+                //正则表达式：密码必须是数字+字母的组合并且长度是8-15
+                String reg = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,11}$";
+                if (userName.length() >= 3 && !userName.contains(" ") && password.matches(reg)){
+                    User user = new User();
+                    user.setUsername(userName);
+                    user.setPassword(password);
+                    user.setBrief(brief);
+
+                    if (accountDao.IsExist(userName)){
+                        JOptionPane.showMessageDialog(frame,"用户已存在","提示信息",JOptionPane.ERROR_MESSAGE);
+                    }else {
+                        boolean flag = accountDao.userReg(user);
+                        if (flag){
+                            JOptionPane.showMessageDialog(frame,"注册成功","提示信息",JOptionPane.INFORMATION_MESSAGE);
+                            //关闭提示框
+                            frame.setVisible(false);
+                        }else {
+                            JOptionPane.showMessageDialog(frame,"注册失败","提示信息",JOptionPane.ERROR_MESSAGE);
+                        }
+                    }
+                }else {
+                    JOptionPane.showMessageDialog(frame,"用户名长度必须大于等于3且不能出现空格，密码必须是包含字母、数字的6-11位字符串","提示信息",JOptionPane.ERROR_MESSAGE);
+                }
             }
         });
     }

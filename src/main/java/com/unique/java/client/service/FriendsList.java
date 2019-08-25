@@ -4,10 +4,9 @@ import com.unique.java.util.CommUtils;
 import com.unique.java.vo.MessageVO;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
@@ -197,7 +196,8 @@ public class FriendsList {
 
         frame = new JFrame(userName);
         frame.setContentPane(FriendsList);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        //默认关闭窗口不做处理
+        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setSize(400,300);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -211,6 +211,28 @@ public class FriendsList {
             @Override
             public void actionPerformed(ActionEvent e) {
                 new CreateGroupGUI(userName,users,connect2Server,FriendsList.this);
+            }
+        });
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int option = JOptionPane.showConfirmDialog(null,"是否退出登录","系统提示",JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE);
+                if (option == JOptionPane.YES_NO_OPTION){
+                    MessageVO messageVO = new MessageVO();
+                    //退出登录
+                    //type:0
+                    //content:username
+                    messageVO.setType("0");
+                    messageVO.setContent(userName);
+                    String json = CommUtils.object2Json(messageVO);
+                    try {
+                        PrintStream out = new PrintStream(connect2Server.getOut(),true,"UTF-8");
+                        out.println(json);
+                    } catch (UnsupportedEncodingException e1) {
+                        e1.printStackTrace();
+                    }
+                    System.exit(0);
+                }
             }
         });
     }
