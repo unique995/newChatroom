@@ -36,9 +36,9 @@ public class UserReg {
                 String password = String.valueOf(passwordField1.getPassword());
                 String brief = brieftextField1.getText();
                 //判断注册的账户的密码是否符合注册要求
-                //正则表达式：密码必须是数字+字母的组合并且长度是8-15
+                //正则表达式：密码必须是数字+字母的组合并且长度是6-11
                 String reg = "^(?![0-9]+$)(?![a-zA-Z]+$)[0-9A-Za-z]{6,11}$";
-                if (userName.length() >= 3 && !userName.contains(" ") && password.matches(reg)){
+                if (userName.length() >= 3 && !userName.contains(" ") && password.matches(reg) && !password.contains(" ")){
                     User user = new User();
                     user.setUsername(userName);
                     user.setPassword(password);
@@ -57,7 +57,7 @@ public class UserReg {
                         }
                     }
                 }else {
-                    JOptionPane.showMessageDialog(frame,"用户名长度必须大于等于3且不能出现空格，密码必须是包含字母、数字的6-11位字符串","提示信息",JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(frame,"用户名长度必须大于等于3且不能出现空格，密码必须是包含字母、数字的6-11位字符串,不能出现空格","提示信息",JOptionPane.ERROR_MESSAGE);
                 }
             }
         });
