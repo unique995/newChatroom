@@ -128,22 +128,18 @@ public class FriendsList {
                 PaivateChatGUIList.put(lableName,privateChatGUI);
             }
         }
-
         @Override
         public void mousePressed(MouseEvent e) {
 
         }
-
         @Override
         public void mouseReleased(MouseEvent e) {
 
         }
-
         @Override
         public void mouseEntered(MouseEvent e) {
 
         }
-
         @Override
         public void mouseExited(MouseEvent e) {
 
@@ -187,8 +183,6 @@ public class FriendsList {
 
         }
     }
-
-
     public FriendsList(String userName,Set<String> users,Connect2Server connect2Server){
         this.userName = userName;
         this.users = users;
